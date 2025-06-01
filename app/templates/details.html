@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - PharmaGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card bg-dark text-white">
+                <img src="{{ url_for('static', filename='img/' + product.image) }}" class="img-fluid" alt="{{ product.name }}">
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card bg-dark text-white p-4">
+                <h1 class="mb-4">{{ product.name }}</h1>
+                <h3 class="text-primary mb-4">${{ product.price }}</h3>
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="me-2">Rating:</span>
+                        <i class="bi bi-star-fill text-warning"></i>
+                        <i class="bi bi-star-fill text-warning"></i>
+                        <i class="bi bi-star-fill text-warning"></i>
+                        <i class="bi bi-star-fill text-warning"></i>
+                        <i class="bi bi-star-half text-warning"></i>
+                        <span class="ms-2">(500 reviews)</span>
+                    </div>
+                    <p class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> In Stock</p>
+                </div>
+                <div class="underline mb-4"></div>
+                <h5 class="mb-3">Description:</h5>
+                <p>{{ product.description }}</p>
+                
+                <h5 class="mt-4 mb-3">Features:</h5>
+                <ul>
+                    <li>Easy to use design</li>
+                    <li>Durable construction</li>
+                    <li>Compact for storage</li>
+                    <li>Includes detailed instructions</li>
+                    <li>Battery operated (where applicable)</li>
+                    <li>Meets international safety standards</li>
+                </ul>
+
+                <div class="d-flex mt-4 align-items-center">
+                    <button id="addToCartBtn" class="btn btn-primary btn-lg" 
+                        data-id="{{ product.id }}"
+                        data-name="{{ product.name }}"
+                        data-price="{{ product.price }}"
+                        data-image="{{ url_for('static', filename='img/' + product.image) }}">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        
+        addToCartBtn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            const price = this.dataset.price;
+            const image = this.dataset.image;
+            
+            const item = {
+                id: id,
+                name: name,
+                price: price,
+                image: image,
+                quantity: 1
+            };
+            
+            let cart = JSON.parse(localStorage.getItem('pharmaGoCart')) || [];
+            const existingItemIndex = cart.findIndex(cartItem => cartItem.name === item.name);
+            
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += 1;
+            } else {
+                cart.push(item);
+            }
+            
+            localStorage.setItem('pharmaGoCart', JSON.stringify(cart));
+            updateCartBadge();
+            
+            const toast = document.createElement('div');
+            toast.className = 'position-fixed bottom-0 end-0 p-3';
+            toast.style.zIndex = '5';
+            toast.innerHTML = `
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-success text-white">
+                        <strong class="me-auto">Added to Cart</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body bg-dark text-white">
+                        ${name} has been added to your cart!<br>
+                        <div class="mt-2 pt-2 border-top">
+                            <a href="{{ url_for('main.summary') }}" class="btn btn-sm btn-primary">View Cart</a>
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="toast">Continue Shopping</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        });
+
+        function updateCartBadge() {
+            const cart = JSON.parse(localStorage.getItem('pharmaGoCart')) || [];
+            const totalItems = cart.reduce((total, item) => total + parseInt(item.quantity), 0);
+            const badges = document.querySelectorAll('.cart-badge');
+            badges.forEach(badge => {
+                badge.textContent = totalItems;
+            });
+        }
+        
+        updateCartBadge();
+    });
+</script>
+{% endblock %}

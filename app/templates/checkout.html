@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - PharmaGo{% endblock %}
+
+{% block styles %}
+<style>
+    .underline {
+        height: 2px;
+        background-color: #444;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+
+    .form-control,
+    .form-select {
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        color: #fff;
+    }
+
+    .form-check-label span {
+        flex: 1;
+    }
+    
+    .form-control::placeholder {
+        color: #777;
+    }
+    
+    .form-control:focus {
+        background-color: #2a2a2a;
+        border-color: #00b894;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <h3>Delivery Information</h3>
+                <div class="underline"></div>
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="cart_subtotal" id="cart_subtotal" value="0">
+                    <input type="hidden" name="cart_delivery" id="cart_delivery" value="6.99">
+                    <input type="hidden" name="cart_tax" id="cart_tax" value="0">
+                    <input type="hidden" name="cart_total" id="cart_total" value="0">
+                    <input type="hidden" name="cart_items" id="cart_items" value="">
+                    
+                    <div id="userDataContainer" 
+                         data-is-authenticated="{{ current_user.is_authenticated|lower }}"
+                         data-user-fullname="{% if current_user.is_authenticated %}{{ current_user.first_name }} {{ current_user.last_name }}{% endif %}"
+                         data-user-phone="{% if current_user.is_authenticated %}{{ current_user.phone }}{% endif %}"
+                         data-user-address="{% if current_user.is_authenticated %}{{ current_user.address }}{% endif %}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.full_name.label(class="form-label") }}
+                        {% if form.full_name.errors %}
+                            {{ form.full_name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.full_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.full_name(class="form-control") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.phone.label(class="form-label") }}
+                        {% if form.phone.errors %}
+                            {{ form.phone(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.phone.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.phone(class="form-control") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.address.label(class="form-label") }}
+                        {% if form.address.errors %}
+                            {{ form.address(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.address.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.address(class="form-control") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-5">
+                        <h3>💳 Payment Information</h3>
+                        <div class="underline"></div>
+                        <div class="mb-3">
+                            <label class="form-check-label d-block mb-2">Select Payment Method</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="upiOption" value="UPI Payment" checked>
+                                <label class="form-check-label" for="upiOption">UPI Payment</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="codOption" value="Cash on Delivery">
+                                <label class="form-check-label" for="codOption">Cash on Delivery</label>
+                            </div>
+                        </div>
+                        
+                        <div id="upiSection" class="mb-3">
+                            <label for="upiId">Enter UPI ID</label>
+                            <input type="text" class="form-control" id="upiId" name="upiId" placeholder="example@upi">
+                        </div>
+                        
+                        <div id="codNote" class="alert alert-secondary d-none" role="alert">
+                            💵 Please keep the exact amount ready for contactless delivery.
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <h3> Delivery Method</h3>
+                        <div class="underline"></div>
+                        <div class="mb-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="deliveryMethod" id="standardDelivery" value="Standard Delivery" checked>
+                                <label class="form-check-label d-flex justify-content-between align-items-center" for="standardDelivery">
+                                    <div>
+                                        <strong>Standard Delivery</strong>
+                                        <p class="text-muted mb-0 small">Delivery within 3-5 business days</p>
+                                    </div>
+                                    <span class="text-white">$4.99</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="deliveryMethod" id="expressDelivery" value="Express Delivery">
+                                <label class="form-check-label d-flex justify-content-between align-items-center" for="expressDelivery">
+                                    <div>
+                                        <strong>Express Delivery</strong>
+                                        <p class="text-muted mb-0 small">Delivery within 24 hours</p>
+                                    </div>
+                                    <span class="text-white">$7.99</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="deliveryMethod" id="ecoFriendly" value="Eco-Friendly Delivery">
+                                <label class="form-check-label d-flex justify-content-between align-items-center" for="ecoFriendly">
+                                    <div>
+                                        <strong>Eco-Friendly Delivery</strong>
+                                        <p class="text-muted mb-0 small">Delivered using sustainable methods (2-4 days)</p>
+                                    </div>
+                                    <span class="text-white">$3.99</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="deliveryMethod" id="clickCollect" value="Click & Collect">
+                                <label class="form-check-label d-flex justify-content-between align-items-center" for="clickCollect">
+                                    <div>
+                                        <strong>Click & Collect</strong>
+                                        <p class="text-muted mb-0 small">Collect from our nearest store</p>
+                                    </div>
+                                    <span class="text-white">Free</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="bg-dark border border-secondary p-4 rounded sticky-top" style="top: 20px;">
+                <h4 class="mb-4">🧾 Order Summary</h4>
+                
+                <div id="checkoutItems">
+                </div>
+                
+                <hr class="text-secondary my-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <strong>Subtotal:</strong><span id="subtotalAmount" class="text-white">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <strong>Delivery:</strong><span id="deliveryFee" class="text-white">$6.99</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Tax:</strong><span id="taxAmount" class="text-white">$0.00</span>
+                </div>
+                <hr class="text-secondary my-3">
+                <div class="d-flex justify-content-between fs-5 mb-4">
+                    <strong>Total:</strong><strong id="totalPrice" class="text-primary">$0.00</strong>
+                </div>
+                
+                <a href="{{ url_for('main.summary') }}" class="btn btn-outline-light btn-sm w-100 mb-2">
+                    <i class="bi bi-arrow-left"></i> Back to Cart
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const upiOption = document.getElementById('upiOption');
+        const codOption = document.getElementById('codOption');
+        const upiSection = document.getElementById('upiSection');
+        const codNote = document.getElementById('codNote');
+        
+        upiOption.addEventListener('change', () => {
+            if (upiOption.checked) {
+                upiSection.classList.remove('d-none');
+                codNote.classList.add('d-none');
+            }
+        });
+        
+        codOption.addEventListener('change', () => {
+            if (codOption.checked) {
+                upiSection.classList.add('d-none');
+                codNote.classList.remove('d-none');
+            }
+        });
+        
+        const cart = JSON.parse(localStorage.getItem('pharmaGoCart')) || [];
+        
+        if (cart.length === 0) {
+            window.location.href = "{{ url_for('main.summary') }}";
+            return;
+        }
+        
+        let totals = JSON.parse(localStorage.getItem('pharmaGoTotals'));
+        if (!totals) {
+            const subtotal = cart.reduce((total, item) => total + (parseFloat(item.price) * parseInt(item.quantity)), 0);
+            const deliveryFee = 6.99;
+            const taxRate = 0.08;
+            const tax = subtotal * taxRate;
+            const total = subtotal + deliveryFee + tax;
+            
+            totals = {
+                subtotal: subtotal.toFixed(2),
+                deliveryFee: deliveryFee.toFixed(2),
+                tax: tax.toFixed(2),
+                total: total.toFixed(2)
+            };
+            
+            localStorage.setItem('pharmaGoTotals', JSON.stringify(totals));
+        }
+        
+        displayOrderSummary();
+        
+        document.getElementById('cart_subtotal').value = totals.subtotal;
+        document.getElementById('cart_delivery').value = totals.deliveryFee;
+        document.getElementById('cart_tax').value = totals.tax;
+        document.getElementById('cart_total').value = totals.total;
+        
+        function displayOrderSummary() {
+            const checkoutItems = document.getElementById('checkoutItems');
+            
+            checkoutItems.innerHTML = '';
+            
+            cart.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'd-flex justify-content-between align-items-center mb-3';
+                itemDiv.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <img src="${item.image}" alt="${item.name}" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                        <div>
+                            <div>${item.name} <span class="badge bg-secondary">x${item.quantity}</span></div>
+                        </div>
+                    </div>
+                    <div>$${(parseFloat(item.price) * parseInt(item.quantity)).toFixed(2)}</div>
+                `;
+                checkoutItems.appendChild(itemDiv);
+            });
+            
+            document.getElementById('subtotalAmount').textContent = `$${totals.subtotal}`;
+            document.getElementById('deliveryFee').textContent = `$${totals.deliveryFee}`;
+            document.getElementById('taxAmount').textContent = `$${totals.tax}`;
+            document.getElementById('totalPrice').textContent = `$${totals.total}`;
+            
+            autoFillUserData();
+        }
+        
+        function autoFillUserData() {
+            const userDataContainer = document.getElementById('userDataContainer');
+            const isAuthenticated = userDataContainer.dataset.isAuthenticated === 'true';
+            
+            if (isAuthenticated) {
+                const fullNameField = document.getElementById('full_name');
+                const phoneField = document.getElementById('phone');
+                const addressField = document.getElementById('address');
+                
+                const userFullName = userDataContainer.dataset.userFullname;
+                const userPhone = userDataContainer.dataset.userPhone;
+                const userAddress = userDataContainer.dataset.userAddress;
+                
+                if (fullNameField && !fullNameField.value && userFullName) {
+                    fullNameField.value = userFullName;
+                }
+                
+                if (phoneField && !phoneField.value && userPhone && userPhone !== 'None') {
+                    phoneField.value = userPhone;
+                }
+                
+                if (addressField && !addressField.value && userAddress && userAddress !== 'None') {
+                    addressField.value = userAddress;
+                }
+            }
+        }
+        
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            if (form.checkValidity() === false) {
+                return;
+            }
+            
+            document.getElementById('cart_items').value = JSON.stringify(cart);
+            
+            localStorage.removeItem('pharmaGoCart');
+            localStorage.removeItem('pharmaGoTotals');
+        });
+        
+        const deliveryOptions = document.querySelectorAll('input[name="deliveryMethod"]');
+        deliveryOptions.forEach(option => {
+            option.addEventListener('change', function() {
+                let deliveryFee = 4.99; 
+                
+                if (this.id === 'expressDelivery') {
+                    deliveryFee = 7.99;
+                } else if (this.id === 'ecoFriendly') {
+                    deliveryFee = 3.99;
+                } else if (this.id === 'clickCollect') {
+                    deliveryFee = 0.00;
+                }
+                
+                document.getElementById('deliveryFee').textContent = `$${deliveryFee.toFixed(2)}`;
+                
+                const subtotal = parseFloat(totals.subtotal);
+                const taxRate = 0.08;
+                const tax = subtotal * taxRate;
+                const total = subtotal + deliveryFee + tax;
+                
+                document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+                
+                document.getElementById('cart_delivery').value = deliveryFee.toFixed(2);
+                document.getElementById('cart_total').value = total.toFixed(2);
+                
+                totals = {
+                    subtotal: totals.subtotal,
+                    deliveryFee: deliveryFee.toFixed(2),
+                    tax: tax.toFixed(2),
+                    total: total.toFixed(2)
+                };
+                localStorage.setItem('pharmaGoTotals', JSON.stringify(totals));
+            });
+        });
+    });
+</script>
+{% endblock %}

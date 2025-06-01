@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PharmaGo - Urgent Medical Supplies Delivery{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #151515;
+            color: #fff;
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div id="main">
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #151515;">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                    <h4>PharmaGo</h4>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" href="{{ url_for('main.index') }}">Home</a></li>
+                        {% if current_user.is_authenticated %}
+                        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'auth.account' %}active{% endif %}" href="{{ url_for('auth.account') }}">My Account</a></li>
+                        {% endif %}
+                    </ul>
+                    <form class="d-flex" action="{{ url_for('main.search') }}" method="get">
+                        {{ search_form.hidden_tag() if search_form }}
+                        <input class="form-control me-2" type="search" name="query" placeholder="Search medical supplies..." aria-label="Search" {% if search_form and search_form.query.data %}value="{{ search_form.query.data }}"{% endif %}>
+                        <button class="btn btn-outline-light" type="submit">Search</button>
+                    </form>
+                    <div class="d-flex ms-2">
+                        {% if current_user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ current_user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('auth.account') }}">My Account</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light me-2">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light">Register</a>
+                        {% endif %}
+                        <a href="{{ url_for('main.summary') }}" class="btn btn-primary ms-2">
+                            <i class="bi bi-cart"></i> Cart <span class="badge bg-secondary cart-badge">0</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+        <footer class="bg-dark text-white py-4 mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <h5>PharmaGo</h5>
+                        <p>Urgent Medical Supplies Delivered When You Need Them Most</p>
+                        <p>&copy; 2025 PharmaGo. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <h5>Quick Links</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="{{ url_for('main.index') }}" class="text-decoration-none text-white">Home</a></li>
+                            <li><a href="{{ url_for('main.summary') }}" class="text-decoration-none text-white">My Cart</a></li>
+                            {% if current_user.is_authenticated %}
+                            <li><a href="{{ url_for('auth.account') }}" class="text-decoration-none text-white">My Account</a></li>
+                            <li><a href="{{ url_for('auth.logout') }}" class="text-decoration-none text-white">Logout</a></li>
+                            {% else %}
+                            <li><a href="{{ url_for('auth.login') }}" class="text-decoration-none text-white">Login</a></li>
+                            <li><a href="{{ url_for('auth.register') }}" class="text-decoration-none text-white">Register</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>Contact Us</h5>
+                        <p><i class="bi bi-envelope me-2"></i>pharmago@gmail.com</p>
+                        <p><i class="bi bi-telephone me-2"></i>+1123-4567</p>
+                        <p><i class="bi bi-geo-alt me-2"></i>Pharmacy Street, Medical City</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartBadge();
+            
+            function updateCartBadge() {
+                const cart = JSON.parse(localStorage.getItem('pharmaGoCart')) || [];
+                const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+                const badges = document.querySelectorAll('.cart-badge');
+                badges.forEach(badge => {
+                    badge.textContent = totalItems;
+                });
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

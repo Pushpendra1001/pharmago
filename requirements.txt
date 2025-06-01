@@ -1,0 +1,9 @@
+Flask
+Flask-WTF
+WTForms
+Flask-MySQLdb
+mysqlclient
+Flask-Bootstrap
+Flask-Login
+email-validator
+python-dotenv

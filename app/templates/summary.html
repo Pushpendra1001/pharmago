@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGo - My Cart</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #121212;
+            color: #f1f1f1;
+   
+            font-family: 'Segoe UI', sans-serif;
+        }
+        header h2 {
+            font-weight: 600;
+        }
+        nav a {
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+{% block title %}My Cart - PharmaGo{% endblock %}
+
+{% block content %}
+<main class="container py-5">
+    <section id="basket-area" class="mb-5">
+        <h2 class="section-title">🛒 My Cart</h2>
+        <div id="basketItemsContainer">
+            <div id="emptyCartMessage" class="text-center py-5">
+                <p class="text-muted">Your cart is empty</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline-light">Browse Products</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="checkout-area" class="mb-5">
+        <h3 class="section-title">🧾 Checkout Summary</h3>
+        <div class="card bg-dark border-secondary p-4 mb-3">
+            <div class="row g-3">
+                <div class="col-6 text-white">Subtotal</div>
+                <div class="col-6 text-end text-white" id="subtotalAmount">$0.00</div>
+                <div class="col-6 text-white">Delivery</div>
+                <div class="col-6 text-end text-white" id="deliveryFee">$6.99</div>
+                <div class="col-6 text-white">Tax</div>
+                <div class="col-6 text-end text-white" id="taxAmount">$0.00</div>
+                <div class="col-12"><hr class="text-secondary"></div>
+                <div class="col-6 fw-bold text-white">Total</div>
+                <div class="col-6 text-end fw-bold text-primary" id="totalPrice">$0.00</div>
+            </div>
+        </div>
+        <div class="d-grid">
+            <a href="{{ url_for('main.checkout') }}" id="checkoutBtn" class="btn btn-primary btn-lg disabled">
+                <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+            </a>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cart = JSON.parse(localStorage.getItem('pharmaGoCart')) || [];
+        updateCartBadge();
+        renderCart();
+
+        function renderCart() {
+            const basketContainer = document.getElementById('basketItemsContainer');
+            const emptyCartMessage = document.getElementById('emptyCartMessage');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            
+            basketContainer.innerHTML = '';
+            
+            if (cart.length === 0) {
+                basketContainer.appendChild(emptyCartMessage);
+                checkoutBtn.classList.add('disabled');
+            } else {
+                checkoutBtn.classList.remove('disabled');
+                
+                const table = document.createElement('div');
+                table.className = 'table-responsive mb-4';
+                table.innerHTML = `
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th scope="col">Product</th>
+                                <th scope="col" class="text-center">Quantity</th>
+                                <th scope="col" class="text-end">Price</th>
+                                <th scope="col" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody"></tbody>
+                    </table>
+                `;
+                basketContainer.appendChild(table);
+                
+                const tableBody = document.getElementById('cartTableBody');
+                
+                cart.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="${item.image}" alt="${item.name}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                <div>
+                                    <h6 class="mb-0">${item.name}</h6>
+                                    <small class="text-muted">$${parseFloat(item.price).toFixed(2)} each</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <button class="btn btn-sm btn-outline-light decrease-qty" data-index="${index}">-</button>
+                                <input type="text" value="${item.quantity}" class="form-control text-center mx-2 item-qty" style="width: 50px;" data-index="${index}" readonly>
+                                <button class="btn btn-sm btn-outline-light increase-qty" data-index="${index}">+</button>
+                            </div>
+                        </td>
+                        <td class="text-end">$${(parseFloat(item.price) * parseInt(item.quantity)).toFixed(2)}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-danger remove-item" data-index="${index}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                const clearCartBtnContainer = document.createElement('div');
+                clearCartBtnContainer.className = 'd-flex justify-content-end mb-4';
+                
+                const clearCartBtn = document.createElement('button');
+                clearCartBtn.className = 'btn btn-outline-danger';
+                clearCartBtn.innerHTML = '<i class="bi bi-trash me-2"></i> Clear Cart';
+                clearCartBtn.addEventListener('click', function() {
+                    if(confirm('Are you sure you want to clear your cart?')) {
+                        localStorage.removeItem('pharmaGoCart');
+                        localStorage.removeItem('pharmaGoTotals'); 
+                        cart.length = 0;
+                        
+                        document.getElementById('subtotalAmount').textContent = '$0.00';
+                        document.getElementById('deliveryFee').textContent = '$3.99';
+                        document.getElementById('taxAmount').textContent = '$0.00';
+                        document.getElementById('totalPrice').textContent = '$0.00';
+                        
+                        renderCart();
+                        updateCartBadge();
+                    }
+                });
+                
+                clearCartBtnContainer.appendChild(clearCartBtn);
+                basketContainer.appendChild(clearCartBtnContainer);
+                
+                addEventListeners();
+                updateTotals();
+            }
+        }
+
+        function addEventListeners() {
+            document.querySelectorAll('.increase-qty').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (index >= 0 && index < cart.length) {
+                        cart[index].quantity = parseInt(cart[index].quantity) + 1;
+                        saveCart();
+                        renderCart();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.decrease-qty').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (index >= 0 && index < cart.length) {
+                        if (parseInt(cart[index].quantity) > 1) {
+                            cart[index].quantity = parseInt(cart[index].quantity) - 1;
+                        } else {
+                            if(confirm('Remove this item from your cart?')) {
+                                cart.splice(index, 1);
+                            }
+                        }
+                        saveCart();
+                        renderCart();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.remove-item').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (index >= 0 && index < cart.length) {
+                        if(confirm('Remove this item from your cart?')) {
+                            cart.splice(index, 1);
+                            saveCart();
+                            renderCart();
+                        }
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.item-qty').forEach(input => {
+                input.addEventListener('change', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (index >= 0 && index < cart.length) {
+                        let quantity = parseInt(this.value);
+                        
+                        if (isNaN(quantity) || quantity < 1) {
+                            quantity = 1;
+                        }
+                        
+                        cart[index].quantity = quantity;
+                        saveCart();
+                        renderCart();
+                    }
+                });
+                
+                input.addEventListener('focus', function() {
+                    this.removeAttribute('readonly');
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.setAttribute('readonly', 'readonly');
+                });
+            });
+        }
+
+        function updateTotals() {
+            const subtotal = cart.reduce((total, item) => total + (parseFloat(item.price) * parseInt(item.quantity)), 0);
+            const deliveryFee = 6.99;
+            const taxRate = 0.08;
+            const tax = subtotal * taxRate;
+            const total = subtotal + deliveryFee + tax;
+
+            document.getElementById('subtotalAmount').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('deliveryFee').textContent = `$${deliveryFee.toFixed(2)}`;
+            document.getElementById('taxAmount').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+
+            localStorage.setItem('pharmaGoTotals', JSON.stringify({
+                subtotal: subtotal.toFixed(2),
+                deliveryFee: deliveryFee.toFixed(2),
+                tax: tax.toFixed(2),
+                total: total.toFixed(2)
+            }));
+        }
+
+        function saveCart() {
+            localStorage.setItem('pharmaGoCart', JSON.stringify(cart));
+            updateCartBadge();
+        }
+        
+        function updateCartBadge() {
+            const totalItems = cart.reduce((total, item) => total + parseInt(item.quantity), 0);
+            const badges = document.querySelectorAll('.cart-badge');
+            badges.forEach(badge => {
+                badge.textContent = totalItems;
+            });
+        }
+        
+        const continueShopping = document.createElement('div');
+        continueShopping.className = 'd-grid mt-3';
+        continueShopping.innerHTML = `
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+            </a>
+        `;
+        document.getElementById('checkout-area').appendChild(continueShopping);
+    });
+</script>
+{% endblock %}
+</body>
+</html>
